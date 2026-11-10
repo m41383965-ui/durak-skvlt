@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🃏 Дурак ULTIMATE v6</title>
+  <style>
+    /* ============ СТИЛИ ============ */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+    body { background: #0a0f1c; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .screen { display: none; flex-direction: column; height: 100%; width: 100%; }
+    .screen.active { display: flex; }
+
+    /* === ЛОББИ === */
+    #lobby { background: radial-gradient(circle at center, #1e293b, #0a0f1c); justify-content: center; align-items: center; padding: 20px; }
+    .box { background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    h1 { text-align: center; font-size: 32px; margin-bottom: 5px; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; }
+    .sub { text-align: center; font-size: 12px; color: #94a3b8; margin-bottom: 25px; }
+    
+    .field { margin-bottom: 15px; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+    input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; outline: none; transition: 0.2s; }
+    input:focus { border-color: #fbbf24; box-shadow: 0 0 10px rgba(251, 191, 36, 0.2); }
+    
+    button { width: 100%; padding: 15px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e11d48, #be123c); color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4); }
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6); }
+    button:active { transform: scale(0.98); }
+    button.sec { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+    .err { color: #ef4444; font-size: 13px; text-align: center; margin-top: 15px; min-height: 20px; font-weight: bold; }
+
+    /* === ИГРА === */
+    #game { background: radial-gradient(circle, #166534, #064e3b); position: relative; }
+    .top-bar { padding: 12px 20px; background: rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10; }
+    .player-info { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 40px; height: 40px; background: #334155; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+    .pname { font-weight: bold; font-size: 14px; }
+    .pmeta { font-size: 11px; color: #94a3b8; }
+    
+    .center-info { display: flex; gap: 20px; text-align: center; align-items: center; }
+    .box-stat { background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; }
+    .trump { font-size: 24px; color: #fbbf24; font-weight: bold; line-height: 1; }
+    .deck { font-size: 20px; font-weight: bold; color: #fff; line-height: 1; }
+    .timer-val { font-size: 20px; font-weight: bold; color: #ef4444; line-height: 1; }
+    .label { font-size: 9px; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
+
+    .table-area { flex: 1; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; padding: 20px; }
+    .table-pair { position: relative; width: 70px; height: 100px; }
+    .table-pair .card { position: absolute; }
+    .table-pair .card.def { top: -5px; left: 15px; transform: rotate(10deg); }
+
+    .log-box { position: absolute; left: 15px; bottom: 160px; width: 250px; height: 120px; overflow-y: auto; font-size: 12px; color: rgba(255,255,255,0.7); pointer-events: none; text-shadow: 1px 1px 2px #000; z-index: 5; }
+    
+    .bottom-bar { padding: 15px; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; z-index: 10; border-top: 1px solid rgba(255,255,255,0.05); }
+    .hand-area { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 100px; align-items: flex-end; }
+    .actions { display: flex; justify-content: center; gap: 15px; }
+    .actions button { width: auto; padding: 12px 25px; margin: 0; font-size: 14px; }
+
+    /* === КАРТЫ === */
+    .card { width: 70px; height: 100px; background: #fff; border-radius: 8px; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+    .card.red { color: #dc2626; }
+    .card.black { color: #111; }
+    .card .r { font-size: 18px; font-weight: 800; line-height: 1; }
+    .card .s { font-size: 16px; align-self: flex-end; line-height: 1; }
+    .card .bs { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 36px; opacity: 0.15; }
+    
+    .hand-area .card:hover { transform: translateY(-15px); box-shadow: 0 10px 25px rgba(255,255,255,0.2); }
+    .card.dis { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
+    .card.dis:hover { transform: none; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+    .card.table { cursor: default; animation: drop 0.3s ease-out; }
+    .card.table:hover { transform: none; }
+    @keyframes drop { from { transform: translateY(-30px) scale(0.8); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+    /* === ОВЕРЛЕЙ === */
+    #over { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
+    #over.active { display: flex; }
+    .over-box { text-align: center; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #over-title { font-size: 50px; margin-bottom: 10px; color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.5); }
+    #over-msg { font-size: 20px; color: #94a3b8; margin-bottom: 40px; }
+    .over-box button { width: 200px; }
+
+    /* === ЧАТ === */
+    .chat-area { position: absolute; right: 15px; bottom: 160px; width: 220px; z-index: 5; display: flex; flex-direction: column; gap: 5px; }
+    .chat-msgs { max-height: 150px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+    .chat-msg { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 6px; width: fit-content; max-width: 100%; word-break: break-word; }
+    .chat-input-row { display: flex; gap: 5px; }
+    .chat-input-row input { padding: 8px; font-size: 12px; border-radius: 6px; }
+    .chat-input-row button { padding: 8px; margin: 0; width: auto; font-size: 12px; }
+
+    @media (max-width: 600px) {
+      .card { width: 55px; height: 80px; padding: 5px; }
+      .card .r { font-size: 14px; } .card .bs { font-size: 24px; }
+      .hand-area .card { width: 50px; height: 75px; }
+      .table-pair { width: 55px; height: 80px; }
+      .log-box, .chat-area { display: none; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ЛОББИ -->
+  <div id="lobby" class="screen active">
+    <div class="box">
+      <h1>🃏 Дурак ULTIMATE</h1>
+      <div class="sub">Версия 6.0 — Максимальная мощь</div>
+      
+      <div id="form-join">
+        <div class="field"><label>Ваше имя</label><input id="j-name" type="text" maxlength="12" placeholder="Игрок 1"></div>
+        <div class="field"><label>Код комнаты</label><input id="j-code" type="text" maxlength="6" style="text-transform:uppercase" placeholder="A1B2C3"></div>
+        <div class="field"><label>Пароль комнаты</label><input id="j-pass" type="password" placeholder="••••"></div>
+        <button onclick="joinRoom()">Войти в игру</button>
+        <button class="sec" onclick="toggleForm()">Создать комнату (Админ)</button>
+      </div>
+
+      <div id="form-create" style="display:none;">
+        <div class="field"><label>Ваше имя</label><input id="c-name" type="text" maxlength="12" placeholder="Создатель"></div>
+        <div class="field"><label>Мастер-код (220415)</label><input id="c-master" type="password" placeholder="Секретный код"></div>
+        <div class="field"><label>Пароль для друзей</label><input id="c-pass" type="password" placeholder="Придумайте пароль"></div>
+        <button onclick="createRoom()">Создать стол</button>
+        <button class="sec" onclick="toggleForm()">Назад</button>
+      </div>
+      <div id="err" class="err"></div>
+    </div>
+  </div>
+
+  <!-- ИГРА -->
+  <div id="game" class="screen">
+    <div class="top-bar">
+      <div class="player-info">
+        <div class="avatar">👤</div>
+        <div>
+          <div class="pname" id="opp-name">Противник...</div>
+          <div class="pmeta"><span id="opp-count">0</span> карт</div>
+        </div>
+      </div>
+      
+      <div class="center-info">
+        <div class="box-stat"><div class="label">Козырь</div><div class="trump" id="trump">?</div></div>
+        <div class="box-stat"><div class="label">Колода</div><div class="deck" id="deck">0</div></div>
+        <div class="box-stat"><div class="label">Время</div><div class="timer-val" id="timer">30</div></div>
+      </div>
+
+      <button style="width:auto; padding:8px 15px; margin:0; font-size:12px; background:#334155; box-shadow:none;" onclick="location.reload()">Выйти</button>
+    </div>
+
+    <div class="table-area" id="table"></div>
+    
+    <div class="log-box" id="log"></div>
+
+    <div class="chat-area">
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-input-row">
+        <input id="chat-input" type="text" maxlength="50" placeholder="Сообщение...">
+        <button onclick="sendChat()">➤</button>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div style="text-align:center; font-weight:bold; font-size:14px;" id="you-role">Роль: ...</div>
+      <div class="hand-area" id="hand"></div>
+      <div class="actions">
+        <button style="background:linear-gradient(135deg, #f59e0b, #d97706); box-shadow:0 4px 15px rgba(245,158,11,0.4);" onclick="act('take')" id="btn-take">Взять</button>
+        <button style="background:linear-gradient(135deg, #10b981, #059669); box-shadow:0 4px 15px rgba(16,185,129,0.4);" onclick="act('pass')" id="btn-pass">Бито</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ОВЕРЛЕЙ КОНЦА ИГРЫ -->
+  <div id="over">
+    <div class="over-box">
+      <h1 id="over-title">Победа!</h1>
+      <p id="over-msg">Игра окончена</p>
+      <button onclick="location.reload()">Вернуться в лобби</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ============================================
+    // ЗВУКОВАЯ СИСТЕМА (АУДИО)
+    // ============================================
+    const sfx = {
+      play: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+      win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+      err: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'),
+      msg: new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+    };
+    sfx.play.volume = 0.4; sfx.win.volume = 0.6; sfx.err.volume = 0.4; sfx.msg.volume = 0.3;
+
+    function playSound(type) {
+      if (!sfx[type]) return;
+      sfx[type].currentTime = 0;
+      sfx[type].play().catch(() => {}); // Игнорируем ошибки блокировки
+    }
+
+    // ============================================
+    // ЛОГИКА КЛИЕНТА
+    // ============================================
+    const socket = io();
+    let currentState = null;
+    let myRole = '';
+
+    function toggleForm() {
+      const j = document.getElementById('form-join');
+      const c = document.getElementById('form-create');
+      const isJoin = j.style.display !== 'none';
+      j.style.display = isJoin ? 'none' : 'block';
+      c.style.display = isJoin ? 'block' : 'none';
+      document.getElementById('err').innerText = '';
+    }
+
+    function createRoom() {
+      const name = document.getElementById('c-name').value.trim();
+      const master = document.getElementById('c-master').value;
+      const pass = document.getElementById('c-pass').value;
+      
+      if (!name) return showErr('Введите имя');
+      if (!pass) return showErr('Придумайте пароль');
+
+      socket.emit('create_room', { name, master, pass }, (res) => {
+        if (res.error) {
+          playSound('err');
+          showErr(res.error);
+        } else {
+          alert('✅ Комната создана!\nКод: ' + res.roomId + '\nПароль: ' + pass);
+          startGameUI(name);
+        }
+      });
+    }
+
+    function joinRoom() {
+      const name = document.getElementById('j-name').value.trim();
+      const code = document.getElementById('j-code').value.trim().toUpperCase();
+      const pass = document.getElementById('j-pass').value;
+
+      if (!name || !code || !pass) return showErr('Заполните все поля');
+
+      socket.emit('join_room', { name, code, pass }, (res) => {
+        if (res.error) {
+          playSound('err');
+          showErr(res.error);
+        } else {
+          startGameUI(name);
+        }
+      });
+    }
+
+    function startGameUI(name) {
+      document.getElementById('lobby').classList.remove('active');
+      document.getElementById('game').classList.add('active');
+    }
+
+    function showErr(msg) {
+      document.getElementById('err').innerText = msg;
+    }
+
+    function act(type, cardId) {
+      socket.emit('action', { action: type, cardId }, (res) => {
+        if (res && res.error) {
+          playSound('err');
+        } else {
+          if (type !== 'take' && type !== 'pass') playSound('play');
+        }
+      });
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      socket.emit('chat', { text });
+      input.value = '';
+    }
+
+    // Слушаем Enter в чате
+    document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChat();
+    });
+
+    // ============================================
+    // ОТРИСОВКА СОСТОЯНИЯ (STATE)
+    // ============================================
+    socket.on('state', (s) => {
+      currentState = s;
+      myRole = s.you.role;
+
+      // Верхняя панель
+      document.getElementById('opp-name').innerText = s.opp ? s.opp.name : 'Ожидание...';
+      document.getElementById('opp-count').innerText = s.opp ? s.opp.count : 0;
+      
+      document.getElementById('trump').innerText = s.trump || '?';
+      document.getElementById('trump').style.color = (s.trump === '♥' || s.trump === '♦') ? '#ef4444' : '#fff';
+      
+      document.getElementById('deck').innerText = s.deckCount;
+      document.getElementById('timer').innerText = s.timeLeft || 0;
+
+      // Роль
+      const roleEl = document.getElementById('you-role');
+      roleEl.innerText = myRole === 'atk' ? '⚔️ Вы Атакуете' : '🛡️ Вы Защищаетесь';
+      roleEl.style.color = myRole === 'atk' ? '#fbbf24' : '#60a5fa';
+
+      // Кнопки действий
+      document.getElementById('btn-take').style.display = (myRole === 'def' && s.table.length > 0) ? 'block' : 'none';
+      document.getElementById('btn-pass').style.display = (myRole === 'atk' && s.table.length > 0 && !s.table.some(t => !t.beaten)) ? 'block' : 'none';
+
+      renderTable(s.table);
+      renderHand(s.you.hand, s);
+      renderLog(s.log);
+      
+      // Обновляем чат, если в логах есть сообщения
+      updateChat(s.log);
+    });
+
+    socket.on('game_over', (data) => {
+      playSound('win');
+      document.getElementById('over-title').innerText = '🏆 Победил: ' + data.winner;
+      document.getElementById('over-msg').innerText = data.message;
+      document.getElementById('over').classList.add('active');
+    });
+
+    // ============================================
+    // ФУНКЦИИ ОТРИСОВКИ
+    // ============================================
+    function renderTable(table) {
+      const el = document.getElementById('table');
+      el.innerHTML = '';
+      table.forEach(t => {
+        const wrap = document.createElement('div');
+        wrap.className = 'table-pair';
+        
+        const c = createCardEl(t.card, true);
+        wrap.appendChild(c);
+
+        if (t.beaten && t.beatenBy) {
+          const bc = createCardEl(t.beatenBy, true);
+          bc.classList.add('def');
+          wrap.appendChild(bc);
+        }
+        el.appendChild(wrap);
+      });
+    }
+
+    function renderHand(hand, state) {
+      const el = document.getElementById('hand');
+      el.innerHTML = '';
+      const ranksOnTable = state.table.map(t => t.card.r);
+      const unbeaten = state.table.find(t => !t.beaten);
+
+      hand.forEach(card => {
+        const c = createCardEl(card, false);
+        let canPlay = false;
+        let actionType = '';
+
+        if (myRole === 'atk') {
+          if (state.table.length === 0) { canPlay = true; actionType = 'attack'; }
+          else if (state.table.length < 6 && ranksOnTable.includes(card.r)) { canPlay = true; actionType = 'attack'; }
+        } else if (myRole === 'def' && unbeaten) {
+          if (isBeat(card, unbeaten.card, state.trump)) { canPlay = true; actionType = 'defend'; }
+          else if (card.r === unbeaten.card.r && isBeat(card, unbeaten.card, state.trump)) { canPlay = true; actionType = 'translate'; }
+        }
+
+        if (!canPlay) c.classList.add('dis');
+        else c.onclick = () => act(actionType, card.id);
+
+        el.appendChild(c);
+      });
+    }
+
+    function renderLog(logs) {
+      const el = document.getElementById('log');
+      if(!el) return;
+      el.innerHTML = logs.map(l => `<div>${l.text}</div>`).join('');
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function updateChat(logs) {
+      const el = document.getElementById('chat-msgs');
+      if(!el) return;
+      // Оставляем только сообщения с 💬
+      const msgs = logs.filter(l => l.text.startsWith('💬'));
+      el.innerHTML = msgs.map(m => {
+        const parts = m.text.replace('💬 ', '').split(': ');
+        return `<div class="chat-msg"><b>${parts[0]}:</b> ${parts[1] || ''}</div>`;
+      }).join('');
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function createCardEl(card, isTable) {
+      const el = document.createElement('div');
+      el.className = 'card ' + ((card.s === '♥' || card.s === '♦') ? 'red' : 'black');
+      if (isTable) el.classList.add('table');
+      el.innerHTML = `
+        <div class="r">${card.r}</div>
+        <div class="bs">${card.s}</div>
+        <div class="s">${card.s}</div>
+      `;
+      return el;
+    }
+
+    function isBeat(a, b, trump) {
+      const W = { '6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+      const aT = a.s === trump, bT = b.s === trump;
+      if (aT && !bT) return true;
+      if (!aT && bT) return false;
+      if (a.s === b.s) return W[a.r] > W[b.r];
+      return false;
+    }
+  </script>
+</body>
+</html>
