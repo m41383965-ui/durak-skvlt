@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🃏 Дурак PRO</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    body { background: #0f172a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    
+    /* Экраны */
+    .screen { display: none; flex-direction: column; height: 100%; }
+    .screen.active { display: flex; }
+    
+    /* Лобби */
+    #lobby { justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e293b, #0f172a); }
+    .box { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    h1 { text-align: center; font-size: 28px; margin-bottom: 20px; color: #fbbf24; }
+    .field { margin-bottom: 15px; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; }
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 16px; outline: none; }
+    input:focus { border-color: #fbbf24; }
+    button { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #e11d48; color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    button:hover { background: #be123c; }
+    button.sec { background: #3b82f6; }
+    button.sec:hover { background: #2563eb; }
+    .err { color: #ef4444; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+
+    /* Игра */
+    #game { background: #065f46; position: relative; }
+    .top { padding: 15px; background: rgba(0,0,0,0.4); display: flex; justify-content: space-between; align-items: center; }
+    .info { font-size: 14px; font-weight: bold; }
+    .center { display: flex; gap: 20px; text-align: center; }
+    .trump { font-size: 24px; color: #fbbf24; }
+    .deck { font-size: 20px; color: #fff; }
+    .table-area { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding: 20px; }
+    .bottom { padding: 15px; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px; }
+    .hand { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; min-height: 100px; }
+    .actions { display: flex; gap: 10px; justify-content: center; }
+    .actions button { width: auto; padding: 10px 20px; margin: 0; font-size: 14px; }
+
+    /* Карты */
+    .card { width: 60px; height: 90px; background: #fff; border-radius: 6px; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+    .card.red { color: #dc2626; }
+    .card.black { color: #111; }
+    .card .r { font-size: 16px; font-weight: bold; line-height: 1; }
+    .card .s { font-size: 14px; align-self: flex-end; line-height: 1; }
+    .card .bs { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 30px; opacity: 0.2; }
+    .card:hover { transform: translateY(-10px); }
+    .card.dis { opacity: 0.5; cursor: not-allowed; }
+    .card.dis:hover { transform: none; }
+    .table-card { animation: drop 0.3s ease-out; cursor: default; }
+    .table-card:hover { transform: none; }
+    @keyframes drop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .pair { position: relative; width: 60px; height: 90px; }
+    .pair .def { position: absolute; top: -5px; left: 10px; transform: rotate(10deg); }
+    
+    .log { position: absolute; left: 10px; bottom: 150px; font-size: 11px; color: rgba(255,255,255,0.7); text-shadow: 1px 1px 2px #000; pointer-events: none; }
+    
+    #over { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
+    #over.active { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- ЛОББИ -->
+  <div id="lobby" class="screen active">
+    <div class="box">
+      <h1>🃏 ДУРАК PRO</h1>
+      
+      <!-- Вход -->
+      <div id="form-join">
+        <div class="field"><label>Ваше имя</label><input id="j-name" type="text" maxlength="10"></div>
+        <div class="field"><label>Код комнаты</label><input id="j-code" type="text" maxlength="6" style="text-transform:uppercase"></div>
+        <div class="field"><label>Пароль комнаты</label><input id="j-pass" type="password"></div>
+        <button onclick="joinRoom()">Войти в игру</button>
+        <button class="sec" onclick="toggleForm()" style="margin-top:15px; background:#475569;">Создать комнату (Админ)</button>
+      </div>
+
+      <!-- Создание -->
+      <div id="form-create" style="display:none;">
+        <div class="field"><label>Ваше имя</label><input id="c-name" type="text" maxlength="10"></div>
+        <div class="field"><label>Мастер-код</label><input id="c-master" type="password" placeholder="Секретный код"></div>
+        <div class="field"><label>Пароль комнаты (для друзей)</label><input id="c-pass" type="password"></div>
+        <button onclick="createRoom()">Создать стол</button>
+        <button class="sec" onclick="toggleForm()" style="margin-top:15px; background:#475569;">Назад</button>
+      </div>
+      <div id="err" class="err"></div>
+    </div>
+  </div>
+
+  <!-- ИГРА -->
+  <div id="game" class="screen">
+    <div class="top">
+      <div class="info" id="opp-name">Противник: ...</div>
+      <div class="center">
+        <div><div style="font-size:10px">Козырь</div><div class="trump" id="trump">?</div></div>
+        <div><div style="font-size:10px">Колода</div><div class="deck" id="deck">0</div></div>
+      </div>
+      <button style="width:auto; padding:5px 10px; margin:0; font-size:12px; background:#334155;" onclick="location.reload()">Выйти</button>
+    </div>
+    <div class="table-area" id="table"></div>
+    <div class="log" id="log"></div>
+    <div class="bottom">
+      <div class="info" id="you-role" style="text-align:center; color:#fbbf24;">Роль: ...</div>
+      <div class="hand" id="hand"></div>
+      <div class="actions">
+        <button style="background:#f59e0b;" onclick="act('take')" id="btn-take">Взять</button>
+        <button style="background:#10b981;" onclick="act('pass')" id="btn-pass">Бито</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="over">
+    <h1 id="over-title" style="font-size:40px; margin-bottom:20px;">Игра окончена</h1>
+    <p id="over-msg" style="font-size:20px; margin-bottom:30px;"></p>
+    <button onclick="location.reload()" style="padding:15px 40px; font-size:18px;">В лобби</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // --- АУДИО ---
+    const sfx = {
+      play: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'), // Звук карты
+      win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),  // Победа
+      err: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')   // Ошибка
+    };
+    sfx.play.volume = 0.3;
+
+    function playSfx(type) {
+      if(!sfx[type]) return;
+      sfx[type].currentTime = 0;
+      sfx[type].play().catch(()=>{}); // Игнорируем блокировку браузера
+    }
+
+    // --- ЛОГИКА ---
+    const socket = io();
+    let myHand = [];
+
+    function toggleForm() {
+      const j = document.getElementById('form-join');
+      const c = document.getElementById('form-create');
+      j.style.display = j.style.display === 'none' ? 'block' : 'none';
+      c.style.display = c.style.display === 'none' ? 'block' : 'none';
+      document.getElementById('err').innerText = '';
+    }
+
+    function createRoom() {
+      const name = document.getElementById('c-name').value;
+      const master = document.getElementById('c-master').value;
+      const pass = document.getElementById('c-pass').value;
+      socket.emit('create_room', { name, master, pass }, (res) => {
+        if(res.error) { playSfx('err'); document.getElementById('err').innerText = res.error; }
+        else {
+          alert('Комната создана! Код: ' + res.roomId + '\nПередайте его другу.');
+          document.getElementById('lobby').classList.remove('active');
+          document.getElementById('game').classList.add('active');
+        }
+      });
+    }
+
+    function joinRoom() {
+      const name = document.getElementById('j-name').value;
+      const code = document.getElementById('j-code').value.toUpperCase();
+      const pass = document.getElementById('j-pass').value;
+      socket.emit('join_room', { name, code, pass }, (res) => {
+        if(res.error) { playSfx('err'); document.getElementById('err').innerText = res.error; }
+        else {
+          document.getElementById('lobby').classList.remove('active');
+          document.getElementById('game').classList.add('active');
+        }
+      });
+    }
+
+    function act(type, cardId) {
+      socket.emit('action', { action: type, cardId });
+      playSfx('play');
+    }
+
+    // --- ОТРИСОВКА ---
+    socket.on('state', (s) => {
+      document.getElementById('opp-name').innerText = 'Противник: ' + (s.opp ? s.opp.name + ` (${s.opp.count})` : '...');
+      document.getElementById('trump').innerText = s.trump || '?';
+      document.getElementById('trump').style.color = (s.trump === '♥' || s.trump === '♦') ? '#ef4444' : '#fff';
+      document.getElementById('deck').innerText = s.deck;
+      
+      const roleEl = document.getElementById('you-role');
+      roleEl.innerText = s.you.role === 'atk' ? '⚔️ Вы Атакуете' : '🛡️ Вы Защищаетесь';
+      roleEl.style.color = s.you.role === 'atk' ? '#fbbf24' : '#60a5fa';
+
+      // Кнопки
+      document.getElementById('btn-take').style.display = (s.you.role === 'def' && s.table.length > 0) ? 'block' : 'none';
+      document.getElementById('btn-pass').style.display = (s.you.role === 'atk' && s.table.length > 0 && !s.table.some(t => !t.beaten)) ? 'block' : 'none';
+
+      // Стол
+      const tableEl = document.getElementById('table');
+      tableEl.innerHTML = '';
+      s.table.forEach(t => {
+        const wrap = document.createElement('div');
+        wrap.className = 'pair';
+        wrap.appendChild(createCard(t.card, true));
+        if(t.beaten && t.beatenBy) {
+          const b = createCard(t.beatenBy, true);
+          b.classList.add('def');
+          wrap.appendChild(b);
+        }
+        tableEl.appendChild(wrap);
+      });
+
+      // Рука
+      const handEl = document.getElementById('hand');
+      handEl.innerHTML = '';
+      const tableRanks = s.table.map(t => t.card.rank);
+      const unbeaten = s.table.find(t => !t.beaten);
+
+      s.you.hand.forEach(c => {
+        const el = createCard(c, false);
+        let canPlay = false, actType = '';
+
+        if (s.you.role === 'atk') {
+          if (s.table.length === 0) { canPlay = true; actType = 'attack'; }
+          else if (tableRanks.includes(c.rank)) { canPlay = true; actType = 'attack'; }
+        } else {
+          if (unbeaten && beats(c, unbeaten.card, s.trump)) { canPlay = true; actType = 'defend'; }
+        }
+
+        if(!canPlay) el.classList.add('dis');
+        else el.onclick = () => act(actType, c.id);
+        
+        handEl.appendChild(el);
+      });
+
+      // Лог
+      document.getElementById('log').innerHTML = s.log.map(l => `<div>${l}</div>`).join('');
+    });
+
+    socket.on('game_over', (d) => {
+      playSfx('win');
+      document.getElementById('over-title').innerText = '🏆 ПОБЕДА: ' + d.winner;
+      document.getElementById('over-msg').innerText = 'Дурак: ' + d.loser;
+      document.getElementById('over').classList.add('active');
+    });
+
+    function createCard(c, isTable) {
+      const el = document.createElement('div');
+      el.className = 'card ' + ((c.suit === '♥' || c.suit === '♦') ? 'red' : 'black');
+      if (isTable) el.classList.add('table-card');
+      el.innerHTML = `<div class="r">${c.rank}</div><div class="bs">${c.suit}</div><div class="s">${c.suit}</div>`;
+      return el;
+    }
+
+    function beats(a, b, trump) {
+      const W = { '6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+      const aT = a.suit === trump, bT = b.suit === trump;
+      if (aT && !bT) return true;
+      if (!aT && bT) return false;
+      if (a.suit === b.suit) return W[a.rank] > W[b.rank];
+      return false;
+    }
+  </script>
+</body>
+</html>
