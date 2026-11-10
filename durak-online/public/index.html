@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🃏 ДУРАК ONLINE v2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== ЛОББИ ===== -->
+  <div id="lobby" class="screen active">
+    <div class="lobby-card">
+      <div class="logo">🃏</div>
+      <h1 class="title">ДУРАК<br><span>ONLINE</span></h1>
+      <p class="subtitle">Играй с друзьями из любого города</p>
+
+      <div class="field">
+        <label>Твоё имя</label>
+        <input id="nameInput" type="text" maxlength="14" placeholder="Игрок" autocomplete="off" />
+      </div>
+
+      <button id="createBtn" class="btn btn-primary">
+        <span>Создать стол</span>
+      </button>
+
+      <div class="divider"><span>или</span></div>
+
+      <div class="field">
+        <label>Код стола</label>
+        <input id="codeInput" type="text" maxlength="6" placeholder="A1B2C3" autocomplete="off" style="text-transform:uppercase" />
+      </div>
+      <div class="field">
+        <label>Пароль (если требуется)</label>
+        <input id="passwordInput" type="password" placeholder="••••" autocomplete="off" />
+      </div>
+      <button id="joinBtn" class="btn btn-outline">
+        <span>Войти в игру</span>
+      </button>
+
+      <button id="listBtn" class="btn btn-outline" style="margin-top:8px">
+        <span>Список комнат</span>
+      </button>
+
+      <p id="lobbyError" class="error"></p>
+      <p class="hint">Создай стол и отправь код другу</p>
+    </div>
+
+    <!-- Модалка создания комнаты -->
+    <div id="createModal" class="overlay">
+      <div class="overlay-card">
+        <h2 class="modal-title">Настройки стола</h2>
+        <div class="field">
+          <label>Пароль (необязательно)</label>
+          <input id="newPassword" type="password" placeholder="••••" />
+        </div>
+        <div class="field">
+          <label>Количество игроков</label>
+          <select id="newMaxPlayers">
+            <option value="2" selected>2 игрока (классика)</option>
+            <option value="3">3 игрока</option>
+            <option value="4">4 игрока</option>
+          </select>
+        </div>
+        <button id="confirmCreate" class="btn btn-primary">Создать</button>
+        <button id="cancelCreate" class="btn btn-outline" style="margin-top:8px">Отмена</button>
+      </div>
+    </div>
+
+    <!-- Модалка списка комнат -->
+    <div id="listModal" class="overlay">
+      <div class="overlay-card">
+        <h2 class="modal-title">Активные комнаты</h2>
+        <div id="roomsList" class="rooms-list"></div>
+        <button id="refreshList" class="btn btn-outline" style="margin-top:8px">Обновить</button>
+        <button id="closeList" class="btn btn-outline" style="margin-top:8px">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ИГРА ===== -->
+  <div id="game" class="screen">
+    <div class="top-bar">
+      <div class="player-info opponent">
+        <div class="avatar">👤</div>
+        <div>
+          <div class="pname" id="oppName">—</div>
+          <div class="pmeta"><span id="oppCards">0</span> карт · <span id="oppRole">—</span></div>
+        </div>
+      </div>
+
+      <div class="center-info">
+        <div class="trump-box">
+          <div class="label">Козырь</div>
+          <div class="trump" id="trumpCard">?</div>
+        </div>
+        <div class="deck-box">
+          <div class="label">Колода</div>
+          <div class="deck-count" id="deckCount">0</div>
+        </div>
+      </div>
+
+      <button id="leaveBtn" class="btn btn-small btn-danger">Выйти</button>
+    </div>
+
+    <div class="table-area">
+      <div id="tableCards" class="table-cards"></div>
+    </div>
+
+    <div id="gameLog" class="game-log"></div>
+
+    <div class="bottom-bar">
+      <div class="player-info you">
+        <div class="avatar">🎴</div>
+        <div>
+          <div class="pname" id="youName">Ты</div>
+          <div class="pmeta">Роль: <span id="youRole">—</span></div>
+        </div>
+      </div>
+
+      <div id="hand" class="hand"></div>
+
+      <div class="actions">
+        <button id="takeBtn" class="btn btn-danger">Взять</button>
+        <button id="passBtn" class="btn btn-primary">Бито</button>
+        <button id="translateBtn" class="btn btn-warn">Перевод</button>
+      </div>
+    </div>
+
+    <!-- Чат -->
+    <div id="chatBox" class="chat-box">
+      <div id="chatMessages" class="chat-messages"></div>
+      <div class="chat-input-row">
+        <input id="chatInput" type="text" maxlength="200" placeholder="Сообщение..." />
+        <button id="chatSend" class="btn btn-small btn-primary">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Оверлей победы -->
+  <div id="gameOver" class="overlay">
+    <div class="overlay-card">
+      <div class="overlay-emoji" id="overEmoji">🏆</div>
+      <h2 id="overTitle">Победа!</h2>
+      <p id="overMsg"></p>
+      <button class="btn btn-primary" onclick="location.reload()">В лобби</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
