@@ -1,0 +1,17 @@
+{
+  "name": "durak-master",
+  "version": "4.0.0",
+  "description": "Optimized Durak with master password",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
